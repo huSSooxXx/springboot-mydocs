@@ -1,0 +1,572 @@
+- Authentication, Authorization, keycloak
+- logging
+- elasticsearch
+- dosya yönetimi
+- test
+
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+||															||
+||	 CLIENT REQUEST -> CONTROLLER -> SERVICE -> DAO -> DB  	||
+||															||
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+
+
+
+
+- Tomcat içinde gömülü halde gelir
+- repository sınıfları 
+	public interface UserRepository extends JpaRepository <User, Long>
+	- Long kullanılmasının nedeni User entity içerisinde 'Id' sutunun tipinin Long olması	
+	- JpaRepository sınıfından extend edilir. Bu sayede bir çok hazır fonksiyon kullanılabilir (findAll, delete,..
+	- repo sınıfları interface olarak yazılır.
+
+* Bir Objenin Bean olarak sayılabilmesi için gerekli şartlar;
+	- Serializable olmalı
+	- Constructer metodu olmalı
+	- Setter/Getter olmalı
+
+* Dizin Yapısı
+	- config
+	- controller
+	- dto
+	- exception
+	- model
+	- repository
+	- security
+	- service
+	- util
+
+
+* Spring projesi oluşturmak
+	I. Maven Projesi ile oluşturmak
+		<parent>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-parent</artifactId>
+			<version>1.4.4.RELEASE</version>
+		</parent>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-web</artifactId>
+			</dependency>
+		</dependencies>
+
+	II. Wizard ile oluşturmak
+		https://start.spring.io/ adresinden yararlanılabilir.
+
+* Projenin JAR çıktısını Almak
+	* Intellij için
+		-> Maven Ekranı açılır
+		-> "clean" seçeneği kullanılır
+		-> Clean işlemi bittikten sonra "install"
+		-> Project > Target adlı bir klasör oluşur. İçerisinde PROJEISMI.jar isimli bir dosya bulunur.
+		-> Terminal açılarak "java -jar PROJEISMI.jar" çalıştırılabilir.
+		-> Farklı bir instance açmak için "java -jar PROJEISMI.jar --server.port=8081" komutuyla farklı bir instance içerisinde çalışır.
+
+* Maven Reload etmek
+	Project > pom.xml > Sağ Tık > Maven > Reload Project
+
+* Banner Yazısını değiştirmek
+	Recources altına > banner.txt isimli bir dosya oluşturursak içindeki veriyi ekrana basar
+
+* Generated id oluşturmak
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private long id;
+	
+* Kurulumda gerekli modüller
+	- Spring Boot DevTools
+		Projede anlık yapılan değişiklikleri aktifleştirir. Tomcat'i restart etmeye gerek kalmaz
+
+	- Lombok
+		Getter Setter Constructer gibi yazılması gereken kodları Notasyonlar ile kolay yazdırır.
+
+	- Spring Web
+		Web sunucu ayarlamalarını hazırlar
+
+	- Spring Security
+		Şifre oluşturur, sayfa çıktısını sadece şifre girildiğinde gösterir
+
+	- Spring Data JPA
+		JPA kullanımını aktifleştirir, Hibernate
+		İlişkisel veritabanları üzerinde işlem yapmayı sağlar
+	- Liquibase
+		Veritabanı versiyonlama sistemi diyebiliriz
+
+* Kontroller içerisinde repository tanımlama yöntemleri
+	I. Yöntem: Constructer Injection
+		private UserRepository userRepository;
+		public UserController(UserRepository userRepository) {
+			this.userRepository = userRepository;
+		}
+		
+	II. Yöntem: Autowire Etmek
+		@Autowired
+		TutorialRepository tutorialRepository; 
+	
+* JPA Fonksiyonları
+	- count()					: Kullanılabilir entity sayısını verir.
+	
+	- delete(Entity)			: Verilen entity'yi siler
+	
+	- deleteById(ID)			: Id'ye göre veriyi siler.
+
+	- deleteAll(List <Entity>)	: Verilen entity listesindekileri siler.
+	
+	- existsById(ID)			: Id'ye göre olup olmadığını sorgulama
+	
+	- findAll()					: İlgili tüm satırları getirir.
+		
+	- findById(ID)				: Id 'ye göre arama
+	
+	- findOne(Long)				: tek satır getirir
+	
+	- save(Entity)				: Veritabanına veri ekler.
+		
+	- saveAll(List <Entity>)	: Verilen entity listesindekileri oluşturur.
+
+NOTASYONLAR
+	@Autowired
+		- Bir bean nesnesinin başka bean sınıfı içerisinde kullanılmasını sağlıyor.
+		- Injection yapmak için kullanılır. 
+		
+	@column(columnDefinition="text")
+		Entity oluştururken text belirtilirken sutun varchar ile değil text tipiyle oluşturulmuş olur.
+
+	@Component
+		- Java Bean olduğunu belirtmek için kullanılır. 
+		- Özelleşmiş versiyonlarını tercih ederiz (repository, controller, service)
+
+	@Controller ve @RestController
+		- Kontroller olduğunu belirtmek için class tanımlamasının üzerine yazılır.
+		- @Restcontroller sınıflarında @ResponseBody varsayılan olarak tanımlanır. Yani, ResponseBody tanımlamaya gerek yoktur.
+	
+	* Lombok Notasyonları
+	
+		@Getter
+			Getter tanımlamaları
+		@Setter
+			Setter tanımlamaları
+		@Data
+			@Getter + @Setter + toString + EqualsAndHashCode tanımlamaları		
+		@AllArgsConstructor	
+			tüm fieldların olduğu constructer oluşturur		
+		@NoArgsConstructor 
+			İçi boş constructer oluşturur.
+		@NoArgsConstructor(force = true)
+			final olarak tanımlanmış değişkenlere int ise 0, string ise null değeri atanmış olarak içi dolu bir constructer oluşturur.
+		@NoArgsConstructor(staticName = "getInstance")
+		
+	@Entity
+		- Bir sınıfın jpa varlığı olduğunu belirtmek için kullanılır.
+		- Özel olarak "name" parametresi belirtilmedikçe sınıf ismi tablo ismi kabul edilir.
+		- java.persistance altındaki import kullanılmalı
+	
+	@GetMapping
+		Controller içerisinde get isteklerini tanımlamak için kullanılır.
+		
+		@GetMapping("/{userId}")
+		public User getOneUser(@PathVariable Long userid){
+			return userRepository.findById(userid);
+		}
+		
+	@Id
+		- Entity oluştururken id sutununu belirtmek için kullanılır.
+		- java.persistance altındaki import kullanılmalı
+	
+	@JoinColumn
+		- Entitiy tanımlanırken foreign key tanımlamasında tabloları bağlar.
+		
+	@MappedSuperclass
+		- Bu classın bir tablo karşılığı yok yalnız diğer sınıflar miras alabilir durumunu belirtmek için kullanılır.
+	
+	@ManyToOne
+		- Entitiy tanımlanırken foreign key tanımlamasında ilişkiyi belirtir.
+		
+		@ManyToOne(fetch = FetchType.LAZY)
+		@JoinColumn(name="user_id", nullable=false)
+		@OnDelete(action = OnDeleteAction.CASCADE)
+		@JsonIgnore
+		User user	
+		
+	@PathVariable
+		RequestMapping path'ine bir id pathi eklemek için kullanılır.
+	
+	@PostMapping
+		Controller içerisinde post isteklerini tanımlamak için kullanılır.
+		@PostMapping
+		public User createUser(@RequestBody User newuser){
+			return userRepository.save(newuser);
+		}
+	
+	@PutMapping
+		Değiştirilmesi istenilen veriyi değiştirmek için kullanılır.
+		
+		@PutMapping("/{userId}")
+	
+	@Repository
+		- veritabanı işlemleri gerçekleştiren sınıflarda kullanılır.
+		- Database kaynaklı exceptionları yakalar.
+		
+	@ResponseBody ve @ResponseEntity	
+		- JSON Serialize işlemleri yapar.
+	
+	@RequestBody
+		- JSON Deserialize işlemlerini yapar.
+	
+	@RequestMapping("/apiv1")
+		- Controller isteklerini bir path yardımıyla toplamak için kullanılır
+		- Yalnızca kontroller sınıflarında kullanılabilir.
+	
+	@Service
+		- Servis katmanında çalışacak bir sınıf olduğunu belirtiyoruz.
+		- 
+	
+	@SpringBootApplication
+		- Ana Classımızı belirtiriz.
+		- Autoconfiguration ve component tarama işlemlerini aktifleştirir.
+		- @Configuration, @ComponentScan, @EnableAutoConfiguration notasyonlarını içerir.
+		
+	@Table(name="user")
+		- JPAda user adında bir tabloya karşılık gelir.
+		- java.persistance altındaki import kullanılmalı		
+	
+	@Transient
+		Entity tanımlarken veritabanında olmayan bir alanı kendimiz oluşturmak istediğimizde değişkeni @Transient olarak tanımlarız.
+		
+			@Transient
+			private Integer age;
+		
+			public void setAge(Integer age) {
+				this.age = age;
+			}
+		
+			public Integer getAge() {
+				return Period.between(dogumTarihi, LocalDate.now()).getYears();
+			}
+			
+* Relationships
+
+	- fetch: Veritabanında veri çekilmesi yöntemini belirtir.
+		EAGER(default): Entity'nin diğer tarafındaki verileri yükler
+		LAZY: Entity'nin diğer tarafındaki verileri yüklemez.
+	- mappedBy: kurulan ilişki sahibi
+	- optional:
+	- nullable: Foregn key null olabilir mi?
+
+	
+	* OneToOne
+		- Örnek 1: Bir kitabın, bir resmi olur.
+			@Entity
+			public class Photo {
+				@OneToOne(mappedBy = "photo")
+				private Book book;
+			}
+
+			@Entity
+			public class Book {
+				@OneToOne(cascade = CascadeType.ALL)
+				@JoinColumn(name = "photo_id")
+				private Photo photo;
+			}
+
+		- Örnek 2:
+			@Entity
+			public class User {
+				@OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+				private Address address;
+			}	
+			
+			@Entity
+			public class Address {
+			@OneToOne(fetch = FetchType.LAZY, optional = false)
+				@JoinColumn(name = "user_id", nullable = false)
+				private User user;	
+			}	
+	* ManyToOne ve OneToMany
+		Örnek 1:
+			@Entity
+			public class Library {  
+				@OneToMany(mappedBy = "library", cascade = CascadeType.ALL)
+				private Set<Book> books = new HashSet<>();	
+			}
+			
+			@Entity
+			public class Book {  
+				@ManyToOne(fetch = FetchType.LAZY, optional = false)
+				@JoinColumn(name = "library_id")
+				@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+				private Library library;	
+
+		Örnek 2:
+			@Entity
+			public class Position {
+				@OneToMany(mappedBy = "position", cascade = CascadeType.ALL)
+				private List<Employee> employee;
+			}
+
+			@Entity
+			public class Employee {
+				@ManyToOne(optional = false)
+				@JoinColumn(name = "position_id", nullable = false,referencedColumnName = "p_id")
+				private Position position;
+			}			
+	
+	* ManyToMany
+		Örnek 1:
+			@Entity
+			public class Cart {
+				@ManyToMany(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+				@JoinTable(name = "cart_items", joinColumns = { @JoinColumn(name = "cart_id") },
+					inverseJoinColumns = { @JoinColumn(name = "item_id") })
+				private Set carts = new HashSet<>();
+			}
+			
+			@Entity
+			public class Item {
+				@ManyToMany(mappedBy = "items", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+				private Set items = new HashSet<>();				
+			}
+			
+		Örnek 2:
+			@Entity
+			public class Account {
+				@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+				@JoinTable(name = "account_role",joinColumns = @JoinColumn(name = "id", referencedColumnName = "id"),
+					inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "role_id"))
+				private List<Role> role;
+			
+			@Entity
+			public class Role {
+				@ManyToMany(mappedBy = "role")
+				private List<Account> account;
+			}
+			
+		Örnek 3:
+			@Entity(name="Employee")
+			public class Employee implements Serializable {
+				@ManyToMany(fetch = FetchType.LAZY,cascade = CascadeType.ALL)
+				@JoinTable(name="EmployeeProjectsJoin", joinColumns = {@JoinColumn(name="eid")},
+					inverseJoinColumns={@JoinColumn(name="pid")})
+				private List<Projects> projects;			
+			}
+			
+			@Entity(name="Projects")
+			public class Projects implements Serializable {
+				@ManyToMany(mappedBy="projects",fetch = FetchType.LAZY,cascade = CascadeType.ALL)
+				private List<Employee> employee;
+			}
+
+* Transactions
+	- hem class için hem de metodlar için transaction tanımlanabilir. Metoda tanımlanan transaction, sınıfa tanımlanan transactionu ezer.
+	
+	
+	* propagation: 
+		Yeni bir transaction açılıp açılmayacağına karar verir ve kullanılıp kullanılmayacağına karar verir.
+		
+		- Propagation.REQUIRED ( default)
+			Transaction var ise kullanır, yoksa yeni oluşturur.
+		- Propagation.SUPPORTS
+			Transaction var ise kullanır, yoksa yeni transactionsuz çalışır.
+		- Propagation.REQUIRES_NEW
+			Transaction var ise bekletir, yeni bir transaction oluşturur.
+		- Propagation..NOT_SUPPORTED
+			Transaction var ise bekletir, yeni bir transaction oluşturmaz.
+		- Propagation.NEVER
+			Transaction var ise exception fırlatır.
+		- Propagation.MANDATORY
+			Transaction yok ise exception fırlatır.
+		- Propagation.NESTED
+			Transaction var ise paralel başka bir transaction açar. Yok ise REQUIRED gibi çalışır.
+
+	* readOnly
+		Veritabanında herhangi bir değişiklik yapılması istenmeyen Readonly transaction oluşturmak için true değeri verilir
+	
+	* timeOut
+		Belirlenen süre içerisinde sorgunun sonucu gelmez ise Rollback yapılır.
+	
+	* rollbackFor
+		Belirtilen class'a göre rollback işleminin yapılmayacağına karar verir.
+	
+	* Örnek
+		@Override
+		@Transactional
+		public void joinOrganization(Uye uye, UyeAdres uyeAdres) {
+			servis1.insert1(uye);
+			if (uye.equals("huseyin")) {
+				throw new RuntimeException("rollback yapılabilmesi için örnek hata");
+			}
+			servis2.insert2(uyeAdres);
+		}
+
+* Exception Handling
+	- Kullanılacak notasyonlar: @ControllerAdvice, @ExceptionHandler
+	- Özel hata exception sınıfı RuntimeException sınıfından extends edilir.
+	* Throwable Sınıflandırması
+		-> Exception
+			-> IOException
+			-> SQLException
+			-> ClassNotFoundException
+			-> RunTimeException
+				-> ArithmeticException
+				-> NullPointerException
+				-> NumberFormatException
+				-> IndexOutOfBoundsException
+		-> Error
+			-> StackOverflowError
+			-> VirtualMachineError
+			-> OutOfMemoryError
+	
+	
+	* Hata Mesajı Modeli
+		@Data
+		@AllArgsConstructor
+		@NoArgsConstructor
+		@Entity
+		public class ExceptionResponse {
+			private Date timestamp;
+			private String detail;
+			private String message;
+		}
+	
+	* Controller Sınıfı 
+		@GetMapping("/users/{id}")
+		public User retriveUser(@PathVariable int id){
+			...
+			} else if (id >1000) {
+				throw new UserIdTooHighException(id + " Aradığınız id numarası çok yüksek");
+			}
+			...
+		}	
+	
+	* Exception'u yakalayacak olan sınıf
+		public class UserIdTooHighException extends RuntimeException {
+			public UserIdTooHighException(String message) {
+				super(message);
+			}
+		}	
+	
+	* Exception Handler Sınıfı
+		@ControllerAdvice
+		public class CustomExceptionHandler extends ResponseEntityExceptionHandler{	
+			
+			@ExceptionHandler (Exception.class)
+			public final ResponseEntity<Object> handleAllExceptions (Exception exception, WebRequest webRequest){
+				ExceptionResponse exceptionResponse = new ExceptionResponse(new Date(), exception.getMessage(), webRequest.getDescription(false));
+				return new ResponseEntity(exception, HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+			
+			@ExceptionHandler(UserIdTooHighException.class)
+			public final ResponseEntity<Object> handleUserIdTooHighException(UserIdTooHighException exception, WebRequest webRequest) {
+				ExceptionResponse exceptionResponse = new ExceptionResponse(new Date(), exception.getMessage(), webRequest.getDescription(false));
+				return new ResponseEntity(exceptionResponse, HttpStatus.URI_TOO_LONG);
+			}	
+		}
+	
+* Özelleştirilmiş Query Kullanımı
+	* JPQL ile Yazım
+		* Repository
+			@Repository
+			public interface UserRepository extends CrudRepository <User, Integer> {
+				@Query("FROM User WHERE age > ?1")
+				List<User> getUserOlderthan(int age);
+			}
+		* Controller
+			@GetMapping("/getuserolderthan/{age}")
+			public List<User> getUserOlderThan(@PathVariable int age) {
+				List <User> users = userRepo.getUserOlderthan(age);
+				return users;
+			}		
+	
+	* Native SQL ile yazımı
+		* Repository
+			
+			* Integer Class
+				@Repository
+				public interface UserRepository extends CrudRepository <User, Integer> {
+					@Query(value = "select count(User.name) from User", nativeQuery = true)
+					int getUserCount();
+				}
+
+			* Optinal Class
+				@Repository
+				public interface UserRepository extends CrudRepository <User, Integer> {
+					@Query(value = "select count(User.name) from User where id = ?1", nativeQuery = true)
+					Optional<User> getUserCount(String str)
+				}
+
+		* Controller
+			@GetMapping("/getusercount")
+			public int getUserCount() {
+				return userRepo.getUserCount();
+			}
+
+ÖNEMLİ DOSYALAR
+
+* application.properties
+	- Konumu: project > src > main > resources > application.properties
+	- Port değiştirme buradan yapılabilir
+		server.port=8786
+	- hibernate tabloları otomatik oluşturması için
+		spring.jpa.hibernate.ddl-auto=update
+	- database bilgileri (şema ismi quest-app)
+		spring.datasource.url=jdbc:mysql://localhost:3306/quest-app?useUnicode=true&useLegacyDatetimeCode
+		spring.datasource.username=root
+		spring.datasource.password=password
+		spring.datasource.driver-class-name=com.mysql.jdbc.Driver
+		
+	* MySQL
+		spring.datasource.url= jdbc:mysql://localhost:3306/testdb?useSSL=false
+		spring.datasource.username= root
+		spring.datasource.password= 123456
+		spring.jpa.properties.hibernate.dialect= org.hibernate.dialect.MySQL5InnoDBDialect
+		# Hibernate ddl auto (create, create-drop, validate, update)
+		spring.jpa.hibernate.ddl-auto= update
+	* PostgreSQL
+		//spring.datasource.driver-class-name=org.postgreql.Driver
+		//spring.datasource.url=jdbc:postgresql://localhost:5438/testdb?currentSchema=vls&characgerEncoding=UTF-8
+		spring.datasource.url= jdbc:postgresql://localhost:5432/testdb
+		spring.datasource.username= postgres
+		spring.datasource.password= 123
+		spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation= true
+		spring.jpa.properties.hibernate.dialect= org.hibernate.dialect.PostgreSQLDialect
+		# Hibernate ddl auto (create, create-drop, validate, update)
+		spring.jpa.hibernate.ddl-auto= update	
+
+HATALAR
+
+	1 - Non-resolvable parent POM for 0.0.1-SNAPSHOT Hatası
+		Çözüm: Kurum Ağı Kapatılıp > Project Sağ Tık > Maven > Update Project > Force Update Tick Seçilir > OK
+
+	2 - Error creating bean with name 'dataSourceScriptDatabaseInitializer'  Hatası
+		Çözüm: Main class içerisindeki notasyon değiştirilir
+			- @SpringBootApplication
+			+ @SpringBootApplication (exclude = {DataSourceAutoConfiguration.class})
+	
+	3 - com.mysql.jdbc.Driver not found
+		Çözüm: Sürücü güncel versiyon ile değiştirilir.
+			- spring.datasource.driver-class-name=com.mysql.jdbc.Driver
+			+ spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+	
+GIT IGNORE TAVSİYESİ
+	.idea
+	*.iws
+	*.iml
+	*.ipr
+
+DOCKER POSTGRESQL KURULUMU
+	#docker volume create --name=pgdata
+	#docker run --name gib-training-postgres -e POSTGRES_PASSWORD=root -d -p 5438:5432 -v pgdata:/var/lib/postgresql/data postgres
+	
+	CREATE USER gib superuser;
+	ALTER USER gib WITH PASSWORD '1234';
+	CREATE DATABASE gib_training;
+	CREATE SCHEMA vls AUTHORIZATION gib;
+	GRAN AL PRIVILEGES ON DATABASE gib_training TO gib;
+
+GRADLE POSTGRESQL DEPENDENCY EKLENMESI
+	runtimeOnly 'org.postgresql:postgresql'
+	
+	
+	
